@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.4)
-project(desctopLinkCreator)
+project(desktopLinkCreator)
 
 set(CMAKE_CXX_STANDARD 17)
 
 
-add_executable(desctopLinkCreator main.cpp)
+add_executable(desktopLinkCreator main.cpp)
 
 set(QT_VERSION 5)
 set(CMAKE_AUTOMOC ON)

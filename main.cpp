@@ -3,10 +3,12 @@
 
 #include <QBoxLayout>
 
+#include <QTextStream>
+#include <QFile>
 #include <QFileDialog>
+#include<QMessageBox>
 
 #include <QWidget>
-#include <QVariant>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -15,7 +17,11 @@
 class Creator : public QMainWindow {
 
 public:
-    // UI
+    explicit Creator(QWidget *parent = nullptr) : QMainWindow(parent){
+        this->setObjectName(QString::fromUtf8("Desktop Link Creator"));
+        setupUi(this);
+    }
+private:
     QWidget *window{};
     QVBoxLayout *mainLayout{};
         QHBoxLayout *NameLayout{};
@@ -32,7 +38,7 @@ public:
         QHBoxLayout *SubmitLayout{};
             QPushButton *SubmitButton{};
 
-    // Functions
+private slots:
     void setIconPath() {
         QString path = QFileDialog::getOpenFileName(this,
                                             "Choose Icon",
@@ -45,14 +51,54 @@ public:
     }
 
     void ConfirmCreation(){
+        if(NameEdit->text().isEmpty()){
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setWindowTitle("Warning");
+            msgBox.setText("Name is required");
+            msgBox.exec();
+            return;
+        }
 
+        QString filename = QDir::homePath() + "/.local/share/applications/" + NameEdit->text() + ".desktop";
+        QFile file(filename);
+        if (file.exists()) {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setWindowTitle("Warning");
+            msgBox.setText("desktop with that name already exists");
+            msgBox.setInformativeText("What i must do with that file?");
+            msgBox.addButton("Overwrite", QMessageBox::AcceptRole);
+            msgBox.addButton("Discard", QMessageBox::RejectRole);
+            if(msgBox.exec() != QMessageBox::AcceptRole)
+                return;
+        }
+        QString filedata = QString("[Desktop Entry]\n"
+                           "Categories=optional\n"
+                           "Comment=optional\n"
+                           "Exec='%1'\n"
+                           "Icon=%2\n"
+                           "Name=%3\n"
+                           "Terminal=false\n"
+                           "Type=Application\n").arg(ExecEdit->text()).arg(IconPathEdit->text()).arg(NameEdit->text());
+
+        QMessageBox msgBox;
+        if (file.open(QIODevice::WriteOnly)) {
+            QTextStream out(&file);
+            out << filedata << Qt::endl;
+            msgBox.setIcon(QMessageBox::Icon::NoIcon);
+            msgBox.setWindowTitle("Created");
+            msgBox.setText("desktop entry was created!");
+        } else {
+            msgBox.setIcon(QMessageBox::Icon::Critical);
+            msgBox.setWindowTitle("Failed");
+            msgBox.setText("file failed to create!");
+        }
+        file.close();
+        msgBox.exec();
     }
 
-    explicit Creator(QWidget *parent = nullptr) : QMainWindow(parent){
-        this->setObjectName(QString::fromUtf8("Desktop Link Creator"));
-        setupUi(this);
-    }
-
+public:
     void setupUi(QMainWindow *MainWindow){
         window = new QWidget(MainWindow);
         mainLayout = new QVBoxLayout();
